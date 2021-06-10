@@ -4,6 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Product = require('./models/product');
 const methodOverride = require('method-override');
+const AppError = require('./AppError');
 
 mongoose.connect('mongodb://localhost:27017/farmStand', {useNewUrlParser: true, useUnifiedTopology: true})
     .then(() => {
@@ -29,16 +30,26 @@ app.get('/products/newProduct', (req, res) => {
     res.render('products/newProduct');
 })
 
-app.get('/products/:id', async(req, res) => {
-    const {id} = req.params;
-    const product = await Product.findById(id);
-    res.render('products/showDetails', {product});
+app.get('/products/:id', async(req, res, next) => {
+    try {
+        const {id} = req.params;
+        const product = await Product.findById(id);
+        res.render('products/showDetails', {product});
+    }
+    catch(error) {
+        next(new AppError('Product Not Found', 404));
+    }
 })
 
-app.get('/products/:id/edit', async(req, res) => {
-    const {id} = req.params;
-    const product = await Product.findById(id);
-    res.render('products/edit', {product});
+app.get('/products/:id/edit', async(req, res, next) => {
+    try {
+        const {id} = req.params;
+        const product = await Product.findById(id);
+        res.render('products/edit', {product});
+    }
+    catch(error) {
+        next(new AppError('Product Not Found', 404));
+    }
 })
 
 app.put('/products/:id', async(req, res) => {
@@ -59,6 +70,10 @@ app.delete('/products/:id', async(req, res) => {
     res.redirect('/products');
 })
 
+app.use((err, req, res, next) => {
+    const {status = 500, message = 'Something Wrong'} = err;
+    res.status(status).send(message);
+})
 
 
 app.listen(1000, () => {
