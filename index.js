@@ -21,9 +21,14 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride('_method'));
 
-app.get('/products', async(req, res) => {
-    const products = await Product.find({});
-    res.render('products/index', {products});
+app.get('/products', async(req, res, next) => {
+    try {
+        const products = await Product.find({});
+        res.render('products/index', {products});
+    }
+    catch(error) {
+        next(error);
+    }
 })
 
 app.get('/products/newProduct', (req, res) => {
@@ -52,22 +57,42 @@ app.get('/products/:id/edit', async(req, res, next) => {
     }
 })
 
-app.put('/products/:id', async(req, res) => {
-    const {id} = req.params;
-    const product = await Product.findByIdAndUpdate(id, req.body, {runValidators: true, new: true});
-    res.redirect(`/products/${product._id}`);
+app.put('/products/:id', async(req, res, next) => {
+    try {
+        const {id} = req.params;
+        const product = await Product.findByIdAndUpdate(id, req.body, {runValidators: true, new: true});
+        res.redirect(`/products/${product._id}`);
+    }
+    catch(error) {
+        next(error);
+    }
 })
 
-app.post('/products', (req, res) => {
-    const newProduct = new Product(req.body);
-    newProduct.save();
-    res.redirect(`/products/${newProduct._id}`);
+app.post('/products', (req, res, next) => {
+    try {
+        const newProduct = new Product(req.body);
+        newProduct.save();
+        res.redirect(`/products/${newProduct._id}`);
+    }
+    catch(error) {
+        next(error);
+    }
 })
 
-app.delete('/products/:id', async(req, res) => {
-    const {id} = req.params;
-    const deleteP = await Product.findByIdAndDelete(id);
-    res.redirect('/products');
+app.delete('/products/:id', async(req, res, next) => {
+    try {
+        const {id} = req.params;
+        const deleteP = await Product.findByIdAndDelete(id);
+        res.redirect('/products');
+    }
+    catch(error) {
+        next(error);
+    }
+})
+
+app.use((err, req, res, next) => {
+    console.log(err.name);
+    next(err);
 })
 
 app.use((err, req, res, next) => {
